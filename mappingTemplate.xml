@@ -1,0 +1,14 @@
+#set($inputRoot = $input.path('$'))
+#if ($inputRoot.containsKey('callback_query'))
+{
+"text": null,
+"lang": "$inputRoot.callback_query.data",
+"chatId": $inputRoot.callback_query.message.chat.id
+}
+#elseif ($inputRoot.containsKey('message'))
+{
+"text": "$inputRoot.message.text",
+"lang": null,
+"chatId": $inputRoot.message.chat.id
+}
+#end

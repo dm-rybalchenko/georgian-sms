@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "georgianSmsBotApi",
+  "type": "object",
+  "oneOf": [
+    {
+      "required": ["message"],
+      "properties": {
+        "message": {
+          "type": "object",
+          "required": ["text", "chat"],
+          "properties": {
+            "text": { "type": "string" },
+            "chat": {
+              "type": "object",
+              "required": ["id"],
+              "properties": {
+                "id": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "required": ["callback_query"],
+      "properties": {
+        "callback_query": {
+          "type": "object",
+          "required": ["message", "data"],
+          "properties": {
+            "data": { "type": "string" },
+            "message": {
+              "type": "object",
+              "required": ["chat"],
+              "properties": {
+                "chat": {
+                  "type": "object",
+                  "required": ["id"],
+                  "properties": {
+                    "id": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

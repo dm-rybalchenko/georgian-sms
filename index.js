@@ -1,55 +1,48 @@
-const getTransliterated = require('./transliterate.js');
-const botToken = process.env.BOT_TOKEN;
-const translateUrl = process.env.TRANSLATE_URL;
-const translateHost = process.env.TRANSLATE_HOST;
-const translateKey = process.env.TRANSLATE_KEY;
+const DBService = require('./services/dataBaseService.js');
+const TGService = require('./services/telegramService.js');
+const TranslateService = require('./services/translateService.js');
+const { botInfo, langSaved } = require('./helpers/messages.js');
 
 
-const handler = async (req) => {
-  if (!req?.body) {
-    return 'Bad Request';
-  }
+const createRes = (statusCode, message) => ({
+  statusCode,
+  body: JSON.stringify({ message }),
+});
 
-  const body = JSON.parse(req.body);
-  const chatId = body?.message?.chat?.id;
-  const sentMessage = body?.message?.text;
-
-  if (!chatId || !sentMessage) {
-    return 'Bad Request';
-  }
+const handler = async (event) => {
+  const message = event?.text?.trim();
+  const lang = event?.lang;
+  const id = event?.chatId;
 
   try {
-    const response = await fetch(translateUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'X-RapidAPI-Key': translateKey,
-        'X-RapidAPI-Host': translateHost,
-      },
-      body: new URLSearchParams({
-        source_language: 'ka',
-        target_language: 'ru',
-        text: getTransliterated(sentMessage),
-      }),
-    });
+    if (lang) {
+      await DBService.updateItem(id, lang);
+      await TGService.sendMessage(id, langSaved);
 
-    const data = await response.json();
+      return createRes(200, 'Success');
+    }
 
-    const telegramRes = JSON.stringify({
-      chat_id: chatId,
-      text: data.data.translatedText,
-    });
+    const user = await DBService.getItemById(id);
 
-    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: telegramRes,
-    });
+    if (message === '/help') {
+      await TGService.sendMessage(id, botInfo);
+
+    } else if (user && message && message !== '/start' && message !== '/lang') {
+      const translated = await TranslateService.translateMessage(
+        message,
+        user.lang
+      );
+      await TGService.sendMessage(id, translated);
+
+    } else {
+      await TGService.sendKeyboard(id);
+    }
+
+    return createRes(200, 'Success');
   } catch (e) {
-    console.log(e);
-    return e;
+    console.log('Server Error', e);
+
+    return createRes(500, 'Server Error ' + e);
   }
 };
 
