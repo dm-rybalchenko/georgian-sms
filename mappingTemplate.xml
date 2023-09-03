@@ -7,7 +7,7 @@
 }
 #elseif ($inputRoot.containsKey('message'))
 {
-"text": "$inputRoot.message.text",
+"text": "$util.escapeJavaScript($inputRoot.message.text).replaceAll("\\'","'")",
 "lang": null,
 "chatId": $inputRoot.message.chat.id
 }
